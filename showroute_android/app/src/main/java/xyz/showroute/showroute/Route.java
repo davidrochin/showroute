@@ -44,7 +44,7 @@ public class Route {
     }
 
     public Route(){
-        this("Nueva ruta", 0, 0, 0, new LatLng[0], ColorUtil.randomColor());
+        this("Ruta vacía", 0, 0, 0, new LatLng[0], ColorUtil.randomColor());
     }
 
     public GoogleMap drawOnMap(GoogleMap map){

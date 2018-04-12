@@ -78,6 +78,10 @@ public class KmlParser {
 
         //Si se encontraron rutas, regresarlas
         if(routes.size() > 0){
+
+            //Agregar rutas vacias para hacer bola (temporal)
+            for (int i = 0; i < 10; i++){ routes.add(new Route()); }
+
             return Arrays.copyOf(routes.toArray(), routes.size(), Route[].class);
         } else {
             Log.e(KmlParser.class.getName(), "No se encontraron rutas en el InputStream");

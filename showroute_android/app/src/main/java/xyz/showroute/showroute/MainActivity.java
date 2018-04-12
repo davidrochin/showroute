@@ -16,7 +16,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
+import android.widget.Spinner;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -30,6 +32,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import jdrc.util.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -64,9 +67,13 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         //Obtener las rutas del archivo KML
-        try { routes = KmlParser.getRoutes(this.getAssets().open("bus_los_mochis.kml")); }
-        catch (Exception e){ e.printStackTrace(); }
+        try {
+            routes = KmlParser.getRoutes(this.getAssets().open("bus_los_mochis.kml"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
+        //Configurar el mapa
         final SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.onCreate(savedInstanceState);
         mapFragment.getMapAsync(new OnMapReadyCallback() {
@@ -92,17 +99,15 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        //Buscar la lista y popularla con las rutas
-        ListView routeListView = findViewById(R.id.routeList);
-        ArrayAdapter<Route> routeListAdapter = new ArrayAdapter<Route>(this, android.R.layout.simple_list_item_1, routes);
-        routeListView.setAdapter(routeListAdapter);
+        //Buscar el spinner y popularlo con las rutas
+        Spinner routesSpinner = findViewById(R.id.spinner_routes);
+        routesSpinner.setAdapter(new RoutesAdapter(this, routes));
 
-        //Establecer que pasa al hacer clic en un elemento de la lista
-        routeListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        //Establecer que pasa al hacer clic en un elemento del spinner
+        routesSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-
-                Route route = (Route)adapterView.getItemAtPosition(i);
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                Route route = (Route) adapterView.getItemAtPosition(i);
 
                 //Limpiar las otras rutas y dibujar la seleccionada
                 gMap.clear();
@@ -111,6 +116,27 @@ public class MainActivity extends AppCompatActivity
                 //Encajar la camara en la ruta
                 CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(route.getBounds(), 20);
                 gMap.animateCamera(cu);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                ArrayList<Route> routes = ((RoutesAdapter)adapterView.getAdapter()).routes;
+            }
+        });
+
+        //Establecer que pasa al hacer clic en el botón para mostrar todas las rutas
+        ((Button)findViewById(R.id.button_all_routes)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                //Limpiar las rutas existentes
+                gMap.clear();
+
+                //Dibujar todas las rutas
+                for (Route route : routes) {
+                    //int routeColor = ColorUtil.randomColor();
+                    route.drawOnMap(gMap);
+                }
             }
         });
     }
