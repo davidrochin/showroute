@@ -1,9 +1,11 @@
 package xyz.showroute.showroute;
 
 import android.graphics.Color;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.design.widget.TabLayout;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -19,7 +21,10 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -28,6 +33,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnSuccessListener;
 
 import jdrc.util.*;
 
@@ -40,6 +46,10 @@ public class MainActivity extends AppCompatActivity
     MapView mapView;
     GoogleMap gMap;
     Route[] routes;
+    FusedLocationProviderClient locationClient;
+
+    View routesLayoutGroup;
+    View directionsLayoutGroup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,6 +104,16 @@ public class MainActivity extends AppCompatActivity
                     route.drawOnMap(googleMap);
                 }
 
+                //Activar la opción que muestra la ubicación del usuario
+                try{
+                    googleMap.setMyLocationEnabled(true);
+                } catch (SecurityException e){
+                    e.printStackTrace();
+                }
+
+                //Ponerle padding para evitar que se tapen los botones del mapa por otras views
+                googleMap.setPadding(0, 128, 0, 0);
+
                 //Guardar el mapa para uso posterior
                 gMap = googleMap;
             }
@@ -139,6 +159,51 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         });
+
+        //Obtener un FusedLocationProviderClient que sirve para solicitar la última ubicación del dispositivo
+        //locationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        //Establecer que pasa al usar las pestañas inferiores
+        routesLayoutGroup = findViewById(R.id.layout_group_routes);
+        directionsLayoutGroup = findViewById(R.id.layout_group_directions);
+
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.tablayout_sections);
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                //Toast.makeText(MainActivity.this, "" + tab.getPosition(), Toast.LENGTH_SHORT).show();
+                switch (tab.getPosition()){
+                    //Rutas
+                    case 0:
+                        routesLayoutGroup.setVisibility(View.VISIBLE);
+                        directionsLayoutGroup.setVisibility(View.GONE);
+                        gMap.setPadding(0, 128, 0, 0);
+                        break;
+                    //Como llegar
+                    case 1:
+                        routesLayoutGroup.setVisibility(View.GONE);
+                        directionsLayoutGroup.setVisibility(View.VISIBLE);
+                        gMap.setPadding(0, 265, 0, 0);
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
+
+        routesLayoutGroup.setVisibility(View.VISIBLE);
+        directionsLayoutGroup.setVisibility(View.GONE);
+
     }
 
     @Override

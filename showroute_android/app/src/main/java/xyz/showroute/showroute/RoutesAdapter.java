@@ -2,6 +2,9 @@ package xyz.showroute.showroute;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.ShapeDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,8 +49,12 @@ public class RoutesAdapter extends BaseAdapter {
 
         TextView nameTextView = (TextView)view.findViewById(R.id.text_name);
         nameTextView.setText(routes.get(i).name);
-        //nameTextView.setTextColor(routes.get(i).color);
-        view.findViewById(R.id.layout_color).setBackgroundColor(routes.get(i).color);
+        //view.findViewById(R.id.layout_color).setBackgroundColor(routes.get(i).color);
+
+        //Cambiar el color del circulito
+        Drawable drawable = view.findViewById(R.id.layout_color).getBackground().getCurrent();
+        GradientDrawable gradientDrawable = (GradientDrawable) drawable;
+        gradientDrawable.setColor(routes.get(i).color);
         return view;
     }
 }

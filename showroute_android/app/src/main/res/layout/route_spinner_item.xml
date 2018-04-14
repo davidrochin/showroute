@@ -12,10 +12,11 @@
 
         <FrameLayout
             android:id="@+id/layout_color"
-            android:layout_width="20dp"
-            android:layout_height="match_parent"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center"
             android:layout_margin="16dp"
-            android:background="@android:color/darker_gray">
+            android:background="@drawable/shape_circle">
 
         </FrameLayout>
 
