@@ -39,7 +39,7 @@ public class KmlParser {
 
                 //Si se encuentra un Placemark
                 if(tagName.equals("Placemark")){
-                    Util.log("Se encontró un placemark");
+                    //Util.log("Se encontró un placemark");
                     Route route = new Route();
 
                     //Confeccionar la ruta
@@ -47,7 +47,7 @@ public class KmlParser {
                         if(event == XmlPullParser.START_TAG){
                             if(parser.getName().equals("name")){
                                 route.name = parser.nextText();
-                                Util.log(route.name);
+                                //Util.log(route.name);
                             } else if(parser.getName().equals("coordinates")){
 
                                 //Obtener el texto de las coordenadas y separarlo en el ArrayList

@@ -24,7 +24,7 @@ public class ColorUtil {
         int g = random.nextInt(255);
         int b = random.nextInt(255);
         newSeed = random.nextInt();
-        Util.log("" + Color.rgb(r,g,b));
+        //Util.log("" + Color.rgb(r,g,b));
         return Color.rgb(r,g,b);
     }
 
