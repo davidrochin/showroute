@@ -79,29 +79,30 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="top|center_horizontal"
-                android:layout_margin="10dp">
+                android:layout_marginBottom="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp">
 
-                <LinearLayout
+                <Button
+                    android:id="@+id/button_select_origin"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal">
+                    android:layout_height="wrap_content"
+                    android:background="@null"
+                    android:text="Seleccionar origen" />
 
-                    <Button
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:drawableLeft="@drawable/ic_add_location_black_24dp"
-                        android:minHeight="0dp"
-                        android:minWidth="0dp" />
-
-                    <EditText
-                        android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:background="@null"
-                        android:ems="10"
-                        android:hint="¿Dónde estás?"
-                        android:inputType="textPersonName"
-                        android:padding="8dp" />
-                </LinearLayout>
+                <EditText
+                    android:id="@+id/input_from"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@null"
+                    android:ems="10"
+                    android:hint="¿A dónde vas?"
+                    android:inputType="textPersonName"
+                    android:padding="8dp"
+                    android:visibility="gone" />
 
             </android.support.v7.widget.CardView>
 
@@ -113,18 +114,25 @@
                 android:layout_marginEnd="10dp"
                 android:layout_marginLeft="10dp"
                 android:layout_marginRight="10dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="0dp">
+                android:layout_marginStart="10dp">
+
+                <Button
+                    android:id="@+id/button_select_destination"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@null"
+                    android:text="Seleccionar destino" />
 
                 <EditText
-                    android:id="@+id/editText"
+                    android:id="@+id/input_to"
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
                     android:background="@null"
                     android:ems="10"
                     android:hint="¿A dónde vas?"
                     android:inputType="textPersonName"
-                    android:padding="8dp" />
+                    android:padding="8dp"
+                    android:visibility="gone" />
 
             </android.support.v7.widget.CardView>
         </LinearLayout>

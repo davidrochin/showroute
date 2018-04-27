@@ -80,7 +80,7 @@ public class KmlParser {
         if(routes.size() > 0){
 
             //Agregar rutas vacias para hacer bola (temporal)
-            for (int i = 0; i < 10; i++){ routes.add(new Route()); }
+            //for (int i = 0; i < 10; i++){ routes.add(new Route()); }
 
             return Arrays.copyOf(routes.toArray(), routes.size(), Route[].class);
         } else {

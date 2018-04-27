@@ -1,5 +1,7 @@
 package xyz.showroute.showroute;
 
+import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.location.Location;
 
 import com.google.android.gms.maps.GoogleMap;
@@ -8,6 +10,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.maps.android.PolyUtil;
 
 import java.util.ArrayList;
 
@@ -60,34 +63,16 @@ public class Route {
         //Dibujar las flechas sobre toda la Polyline
         MarkerOptions arrowMarkerOptions = new MarkerOptions()
                 .position(coordinates[0])
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_arrow_drop_up_black_24dp))
+                //.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_arrow_drop_up_black_24dp))
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.arrow_small))
                 .anchor(0.5f, 0.5f);
-
-        /*for (int i = 0; i < coordinates.length - 1; i++){
-            LatLng middlePoint = new LatLng((coordinates[i].latitude + coordinates[i+1].latitude) / 2f, (coordinates[i].longitude + coordinates[i+1].longitude) / 2f);
-            float[] results = new float[1]; Location.distanceBetween(coordinates[i].latitude, coordinates[i].longitude, coordinates[i+1].latitude, coordinates[i+1].longitude, results);
-
-            Location current = new Location("current"); current.setLatitude(coordinates[i].latitude); current.setLongitude(coordinates[i].longitude);
-            Location next = new Location("next"); next.setLatitude(coordinates[i+1].latitude); next.setLongitude(coordinates[i+1].longitude);
-            arrowMarkerOptions.rotation(current.bearingTo(next));
-            //Util.log(results[0] + "");
-
-            //Solo dibujar la flecha si la distancia entre los marcadores es mas de 100
-            if(results[0] > 100.0){ map.addMarker(arrowMarkerOptions.position(middlePoint)); }
-
-        }*/
 
         Util.log("Esta ruta tiene " + getSegments().length + " segmentos.");
         Util.log("La longitud de esta ruta es de " + getLength() + " ó " + getLengthInMeters() + " metros.");
 
         int i = 0; LatLng point; double separation = 0.005; Segment resultantSegment = new Segment();
-        //Util.log("getPoint() = " + getPoint(i, 0.005));
         while ((point = getPoint(i, separation, resultantSegment)) != null){
             i++;
-
-            /*Location currentLoc = new Location("currentLoc"); currentLoc.setLatitude(coordinates[i].latitude); currentLoc.setLongitude(coordinates[i].longitude);
-            Location nextLoc = new Location("nextLoc"); nextLoc.setLatitude(coordinates[i+1].latitude); nextLoc.setLongitude(coordinates[i+1].longitude);
-            arrowMarkerOptions.rotation(currentLoc.bearingTo(nextLoc));*/
 
             Location currentLoc = new Location("currentLoc"); currentLoc.setLatitude(point.latitude); currentLoc.setLongitude(point.longitude);
             Location nextLoc = new Location("nextLoc"); nextLoc.setLatitude(resultantSegment.end.latitude); nextLoc.setLongitude(resultantSegment.end.longitude);
@@ -178,12 +163,46 @@ public class Route {
         }
     }
 
-    public String toString(){
-        return name;
+    public double getDistanceFrom(LatLng from){
+        Segment[] segments = getSegments();
+        double distance = PolyUtil.distanceToLine(from, segments[0].start, segments[0].end);
+        for(Segment segment : segments){
+            double thisDistance = PolyUtil.distanceToLine(from, segment.start, segment.end);
+            if(thisDistance < distance){
+                distance = thisDistance;
+            }
+        }
+        return distance;
     }
 
-    public static Route calculateBestRoute(Route[] routes, LatLng origin, LatLng destination){
-        return new Route();
+    public static Route getNearestToPoint(Route[] routes, LatLng point){
+        Route nearest = routes[0];
+        for (Route r : routes){
+            if(r.getDistanceFrom(point) < nearest.getDistanceFrom(point)){
+                nearest = r;
+            }
+        }
+        return nearest;
+    }
+
+    public static Route calculateBestRoute(Route[] routes, LatLng from, LatLng to){
+        Route bestRoute = routes[0];
+        double bestDistance = routes[0].getDistanceFrom(from) + routes[0].getDistanceFrom(to);
+
+        for(Route route : routes){
+            double distance = route.getDistanceFrom(from) + route.getDistanceFrom(to);
+            //Util.log(route.name + ", " + distance);
+            if(distance < bestDistance){
+                bestRoute = route;
+                bestDistance = distance;
+            }
+        }
+
+        return bestRoute;
+    }
+
+    public String toString(){
+        return name;
     }
 
 }

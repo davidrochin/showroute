@@ -1,12 +1,10 @@
 package xyz.showroute.showroute;
 
-import android.graphics.Color;
-import android.location.Location;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
-import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -17,14 +15,14 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -32,13 +30,11 @@ import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnSuccessListener;
 
-import jdrc.util.*;
-
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -50,6 +46,22 @@ public class MainActivity extends AppCompatActivity
 
     View routesLayoutGroup;
     View directionsLayoutGroup;
+
+    Spinner routesSpinner;
+
+    //Direcciones para restringir el mapa
+    LatLngBounds mapBounds;
+    LatLng mapNorthEast = new LatLng(25.843149, -108.9374687);
+    LatLng mapSouthWest = new LatLng(25.7352309, -109.0893818);
+
+    //Direcciones elegidas por el usuario
+    LatLng fromLocation;
+    LatLng toLocation;
+
+    //Puntos de prueba
+    LatLng rochinLocation = new LatLng(25.7952263, -108.9976896);
+    LatLng itlmLocation = new LatLng(25.7986727, -108.9747927);
+    LatLng ferLocation = new LatLng(25.8060528, -109.003748);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,6 +95,11 @@ public class MainActivity extends AppCompatActivity
             e.printStackTrace();
         }
 
+        //Calcular el limite del mapa
+        LatLngBounds.Builder latLngBuilder = new LatLngBounds.Builder();
+        latLngBuilder.include(mapNorthEast).include(mapSouthWest);
+        mapBounds = latLngBuilder.build();
+
         //Configurar el mapa
         final SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.onCreate(savedInstanceState);
@@ -114,13 +131,16 @@ public class MainActivity extends AppCompatActivity
                 //Ponerle padding para evitar que se tapen los botones del mapa por otras views
                 googleMap.setPadding(0, 128, 0, 0);
 
+                //Limitar el mapa
+                googleMap.setLatLngBoundsForCameraTarget(mapBounds);
+
                 //Guardar el mapa para uso posterior
                 gMap = googleMap;
             }
         });
 
         //Buscar el spinner y popularlo con las rutas
-        Spinner routesSpinner = findViewById(R.id.spinner_routes);
+        routesSpinner = findViewById(R.id.spinner_routes);
         routesSpinner.setAdapter(new RoutesAdapter(this, routes));
 
         //Establecer que pasa al hacer clic en un elemento del spinner
@@ -171,16 +191,19 @@ public class MainActivity extends AppCompatActivity
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                //Toast.makeText(MainActivity.this, "" + tab.getPosition(), Toast.LENGTH_SHORT).show();
+                //toast.makeText(MainActivity.this, "" + tab.getPosition(), toast.LENGTH_SHORT).show();
                 switch (tab.getPosition()){
                     //Rutas
                     case 0:
+                        gMap.clear();
+                        ((Route)routesSpinner.getSelectedItem()).drawOnMap(gMap);
                         routesLayoutGroup.setVisibility(View.VISIBLE);
                         directionsLayoutGroup.setVisibility(View.GONE);
                         gMap.setPadding(0, 128, 0, 0);
                         break;
                     //Como llegar
                     case 1:
+                        gMap.clear();
                         routesLayoutGroup.setVisibility(View.GONE);
                         directionsLayoutGroup.setVisibility(View.VISIBLE);
                         gMap.setPadding(0, 265, 0, 0);
@@ -204,6 +227,86 @@ public class MainActivity extends AppCompatActivity
         routesLayoutGroup.setVisibility(View.VISIBLE);
         directionsLayoutGroup.setVisibility(View.GONE);
 
+        //Establecer el comportamiento de la seccion de direcciones
+        Button selectDestinationButton = (Button)findViewById(R.id.button_select_destination);
+        selectDestinationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try{
+                    PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+                    startActivityForResult(builder.build(MainActivity.this), DESTINATION_PICKER_REQUEST);
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        Button selectOriginButton = (Button)findViewById(R.id.button_select_origin);
+        selectOriginButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try{
+                    PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+                    startActivityForResult(builder.build(MainActivity.this), ORIGIN_PICKER_REQUEST);
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //Pruebas
+        //Util.toast(this, "" + routes[0].getDistanceFrom(new LatLng(25.7952263, -108.9976896)));
+        //Util.toast(this, "" + routes[1].getDistanceFrom(new LatLng(25.7952263, -108.9976896)));
+        //Util.toast(this, "Ruta mas cercana: " + Route.getNearestToPoint(routes, itlmLocation).name);
+        //Util.toast(this, "Mejor ruta: " + Route.calculateBestRoute(routes, rochinLocation, ferLocation));
+    }
+
+    final int ORIGIN_PICKER_REQUEST = 2;
+    final int DESTINATION_PICKER_REQUEST = 1;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode){
+            case ORIGIN_PICKER_REQUEST:
+            case DESTINATION_PICKER_REQUEST:
+                if(resultCode == RESULT_OK){
+                    Place place = PlacePicker.getPlace(this, data);
+                    Util.log(place.getAddress().toString() + "");
+                    if(requestCode == ORIGIN_PICKER_REQUEST){
+                        fromLocation = place.getLatLng();
+                    } else {
+                        toLocation = place.getLatLng();
+                    }
+
+                    //Si ya se tienen todos los lugares, calcular y seleccionar la mejor ruta
+                    if(fromLocation != null && toLocation != null){
+                        Route bestRoute = Route.calculateBestRoute(routes, fromLocation, toLocation);
+                        gMap.clear();
+                        bestRoute.drawOnMap(gMap);
+
+                        //Encajar la camara en la ruta
+                        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bestRoute.getBounds(), 20);
+                        gMap.animateCamera(cu);
+
+                        //Seleccionarla en el spinner de la otra sección
+                        List<Route> routeList = ((RoutesAdapter)routesSpinner.getAdapter()).routes;
+                        for(int i = 0; i < routeList.size(); i++){
+                            if(routeList.get(i) == bestRoute){
+                                routesSpinner.setSelection(i);
+                            }
+                        }
+
+                    } else {
+                        Toast.makeText(this, "Falta especificar de donde a donde.", Toast.LENGTH_LONG);
+                    }
+
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     @Override
