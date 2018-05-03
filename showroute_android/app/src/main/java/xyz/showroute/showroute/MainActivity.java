@@ -1,10 +1,18 @@
 package xyz.showroute.showroute;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.util.TypedValue;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -63,6 +71,10 @@ public class MainActivity extends AppCompatActivity
     LatLng itlmLocation = new LatLng(25.7986727, -108.9747927);
     LatLng ferLocation = new LatLng(25.8060528, -109.003748);
 
+    //Valores de padding
+    int routesPadding = 128;
+    int directionsPadding = 265;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,6 +100,9 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        //Buscar views que se quieren referenciar
+        routesSpinner = findViewById(R.id.spinner_routes);
+
         //Obtener las rutas del archivo KML
         try {
             routes = KmlParser.getRoutes(this.getAssets().open("bus_los_mochis.kml"));
@@ -100,47 +115,46 @@ public class MainActivity extends AppCompatActivity
         latLngBuilder.include(mapNorthEast).include(mapSouthWest);
         mapBounds = latLngBuilder.build();
 
+        //Revisar si se tiene permisos para la ubicacion y si no hay, pedirlo
+        int permissionCheck = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION);
+        if(permissionCheck == PackageManager.PERMISSION_DENIED){
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+        }
+
         //Configurar el mapa
-        final SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.onCreate(savedInstanceState);
         mapFragment.getMapAsync(new OnMapReadyCallback() {
             @Override
-            public void onMapReady(GoogleMap googleMap) {
+            public void onMapReady(final GoogleMap googleMap) {
 
-                //Poner un marcador en Los Mochis e ir a el
-                LatLng lm = new LatLng(25.799648, -108.974224);
-                googleMap.addMarker(new MarkerOptions().position(lm).title("Marcador de prueba"));
-                googleMap.moveCamera(CameraUpdateFactory.newLatLng(lm));
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lm, 12));
-
-                //int routeColor = getApplicationContext().getResources().getColor(R.color.colorActiveRoute);
-
-                //Dibujar las rutas obtenidas del KML
-                for (Route route : routes) {
-                    //int routeColor = ColorUtil.randomColor();
-                    route.drawOnMap(googleMap);
-                }
-
-                //Activar la opción que muestra la ubicación del usuario
+                //Activar la opción que muestra la ubicación del usuario (si hay permisos para hacerlo)
+                int permissionCheck = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION);
                 try{
-                    googleMap.setMyLocationEnabled(true);
+                    if(permissionCheck == PackageManager.PERMISSION_GRANTED){
+                        googleMap.setMyLocationEnabled(true);
+                    }
                 } catch (SecurityException e){
                     e.printStackTrace();
                 }
 
                 //Ponerle padding para evitar que se tapen los botones del mapa por otras views
-                googleMap.setPadding(0, 128, 0, 0);
+                //Util.toast(MainActivity.this, routesSpinner.getHeight() + "");
+                googleMap.setPadding(0, routesPadding, 0, 0);
 
-                //Limitar el mapa
+                //Limitar el mapa y hacer que no se pueda rotar
                 googleMap.setLatLngBoundsForCameraTarget(mapBounds);
+                googleMap.getUiSettings().setRotateGesturesEnabled(false);
 
                 //Guardar el mapa para uso posterior
                 gMap = googleMap;
+
             }
         });
 
-        //Buscar el spinner y popularlo con las rutas
-        routesSpinner = findViewById(R.id.spinner_routes);
+        //Popular Spinner con las rutas
         routesSpinner.setAdapter(new RoutesAdapter(this, routes));
 
         //Establecer que pasa al hacer clic en un elemento del spinner
@@ -150,12 +164,14 @@ public class MainActivity extends AppCompatActivity
                 Route route = (Route) adapterView.getItemAtPosition(i);
 
                 //Limpiar las otras rutas y dibujar la seleccionada
-                gMap.clear();
-                route.drawOnMap(gMap);
+                if(gMap != null){
+                    gMap.clear();
+                    route.drawOnMap(gMap);
 
-                //Encajar la camara en la ruta
-                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(route.getBounds(), 20);
-                gMap.animateCamera(cu);
+                    //Encajar la camara en la ruta
+                    CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(route.getBounds(), 20);
+                    gMap.animateCamera(cu);
+                }
             }
 
             @Override
@@ -168,7 +184,6 @@ public class MainActivity extends AppCompatActivity
         ((Button)findViewById(R.id.button_all_routes)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 //Limpiar las rutas existentes
                 gMap.clear();
 
@@ -199,14 +214,34 @@ public class MainActivity extends AppCompatActivity
                         ((Route)routesSpinner.getSelectedItem()).drawOnMap(gMap);
                         routesLayoutGroup.setVisibility(View.VISIBLE);
                         directionsLayoutGroup.setVisibility(View.GONE);
-                        gMap.setPadding(0, 128, 0, 0);
+
+                        //Calcular el padding y aplicarlo
+                        routesLayoutGroup.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                routesPadding = routesLayoutGroup.getHeight() - getPixelsFromDPs(MainActivity.this, 10);
+                                gMap.setPadding(0, routesPadding, 0, 0);
+                                //Util.toast(MainActivity.this, routesPadding + "");
+                            }
+                        });
+
                         break;
                     //Como llegar
                     case 1:
                         gMap.clear();
                         routesLayoutGroup.setVisibility(View.GONE);
                         directionsLayoutGroup.setVisibility(View.VISIBLE);
-                        gMap.setPadding(0, 265, 0, 0);
+
+                        //Calcular el padding y aplicarlo
+                        directionsLayoutGroup.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                directionsPadding = directionsLayoutGroup.getHeight() - getPixelsFromDPs(MainActivity.this, 10);
+                                gMap.setPadding(0, directionsPadding, 0, 0);
+                                //Util.toast(MainActivity.this, directionsPadding + "");
+                            }
+                        });
+
                         break;
                     default:
                         break;
@@ -226,6 +261,15 @@ public class MainActivity extends AppCompatActivity
 
         routesLayoutGroup.setVisibility(View.VISIBLE);
         directionsLayoutGroup.setVisibility(View.GONE);
+
+        //Calcular el padding de la seccion default y aplicarlo
+        routesLayoutGroup.post(new Runnable() {
+            @Override
+            public void run() {
+                routesPadding = routesLayoutGroup.getHeight() - getPixelsFromDPs(MainActivity.this, 10);
+                gMap.setPadding(0, routesPadding, 0, 0);
+            }
+        });
 
         //Establecer el comportamiento de la seccion de direcciones
         Button selectDestinationButton = (Button)findViewById(R.id.button_select_destination);
@@ -259,10 +303,12 @@ public class MainActivity extends AppCompatActivity
         //Util.toast(this, "" + routes[1].getDistanceFrom(new LatLng(25.7952263, -108.9976896)));
         //Util.toast(this, "Ruta mas cercana: " + Route.getNearestToPoint(routes, itlmLocation).name);
         //Util.toast(this, "Mejor ruta: " + Route.calculateBestRoute(routes, rochinLocation, ferLocation));
+
     }
 
     final int ORIGIN_PICKER_REQUEST = 2;
     final int DESTINATION_PICKER_REQUEST = 1;
+    final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 3;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -306,6 +352,33 @@ public class MainActivity extends AppCompatActivity
                 break;
             default:
                 break;
+        }
+    }
+
+    SupportMapFragment mapFragment;
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        //super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Util.toast(this, "Por favor reinicie la aplicación para que aparezca tu ubicación en el mapa");
+                    if(gMap != null){
+                        try{
+                            gMap.setMyLocationEnabled(true);
+                        } catch (SecurityException e){
+                            e.printStackTrace();
+                        }
+                    }
+                } else {
+                    Util.toast(this, "Has denegado los permisos de ubicación");
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
         }
     }
 
@@ -365,4 +438,12 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+    public static int getPixelsFromDPs(Activity activity, int dps){
+        Resources r = activity.getResources();
+        int  px = (int) (TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, dps, r.getDisplayMetrics()));
+        return px;
+    }
+
 }

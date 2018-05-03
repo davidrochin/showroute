@@ -18,7 +18,7 @@ public class Util {
     }
 
     public static void toast(Context c, String text){
-        Toast.makeText(c, text, Toast.LENGTH_SHORT).show();
+        Toast.makeText(c, text, Toast.LENGTH_LONG).show();
     }
 
     public static void log(String text){
