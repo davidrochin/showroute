@@ -25,6 +25,7 @@ import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -79,8 +80,8 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        //Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        //setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -92,10 +93,10 @@ public class MainActivity extends AppCompatActivity
         });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+        /*ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
-        toggle.syncState();
+        toggle.syncState();*/
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -171,6 +172,13 @@ public class MainActivity extends AppCompatActivity
                     //Encajar la camara en la ruta
                     CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(route.getBounds(), 20);
                     gMap.animateCamera(cu);
+
+                    //Mostrar el tiempo estimado de pasada
+                    if(route.estimatedArrivalTime != -1){
+                        ((TextView)findViewById(R.id.text_estimated_time)).setText("Tiempo estimado de pasada: " + route.estimatedArrivalTime + " minutos");
+                    } else {
+                        ((TextView)findViewById(R.id.text_estimated_time)).setText("Tiempo estimado de pasada desconocido");
+                    }
                 }
             }
 
@@ -179,24 +187,6 @@ public class MainActivity extends AppCompatActivity
                 ArrayList<Route> routes = ((RoutesAdapter)adapterView.getAdapter()).routes;
             }
         });
-
-        //Establecer que pasa al hacer clic en el botón para mostrar todas las rutas
-        ((Button)findViewById(R.id.button_all_routes)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //Limpiar las rutas existentes
-                gMap.clear();
-
-                //Dibujar todas las rutas
-                for (Route route : routes) {
-                    //int routeColor = ColorUtil.randomColor();
-                    route.drawOnMap(gMap);
-                }
-            }
-        });
-
-        //Obtener un FusedLocationProviderClient que sirve para solicitar la última ubicación del dispositivo
-        //locationClient = LocationServices.getFusedLocationProviderClient(this);
 
         //Establecer que pasa al usar las pestañas inferiores
         routesLayoutGroup = findViewById(R.id.layout_group_routes);

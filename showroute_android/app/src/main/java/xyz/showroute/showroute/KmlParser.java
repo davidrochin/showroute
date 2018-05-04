@@ -45,10 +45,14 @@ public class KmlParser {
                     //Confeccionar la ruta
                     while (!(event == XmlPullParser.END_TAG && parser.getName().equals("Placemark"))){
                         if(event == XmlPullParser.START_TAG){
+
+                            //Leer el nombre
                             if(parser.getName().equals("name")){
                                 route.name = parser.nextText();
-                                //Util.log(route.name);
-                            } else if(parser.getName().equals("coordinates")){
+                            }
+
+                            //Leer las coordenadas
+                            else if(parser.getName().equals("coordinates")){
 
                                 //Obtener el texto de las coordenadas y separarlo en el ArrayList
                                 ArrayList<LatLng> coords = new ArrayList<>();
@@ -62,6 +66,11 @@ public class KmlParser {
 
                                 //Ya que se separó, agregar las coordenadas a la ruta
                                 route.coordinates = Arrays.copyOf(coords.toArray(), coords.size(), LatLng[].class);
+                            }
+
+                            //Leer el tiempo estimado de llegada (en la descripcion)
+                            else if(parser.getName().equals("description")){
+                                route.estimatedArrivalTime = Integer.parseInt(parser.nextText());
                             }
                         }
                         event = parser.next();

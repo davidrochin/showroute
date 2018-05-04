@@ -19,20 +19,29 @@ import jdrc.util.*;
 public class Route {
 
     public String name;
+
+    public int estimatedArrivalTime = 0;
+
     public int cityId;
     public int stateId;
     public int countryId;
+
     public LatLng[] coordinates;
 
     public int color;
 
-    public Route(String name, int cityId, int stateId, int countryId, LatLng[] coordinates, int color){
+    public Route(String name, int cityId, int stateId, int countryId, LatLng[] coordinates, int color, int estimatedArrivalTime){
         this.name = name;
         this.cityId = cityId;
         this.stateId = stateId;
         this.countryId = countryId;
         this.coordinates = coordinates;
         this.color = color;
+        this.estimatedArrivalTime = estimatedArrivalTime;
+    }
+
+    public Route(String name, int cityId, int stateId, int countryId, LatLng[] coordinates, int color){
+        this(name, cityId, stateId, countryId, coordinates, color, -1);
     }
 
     public Route(){
