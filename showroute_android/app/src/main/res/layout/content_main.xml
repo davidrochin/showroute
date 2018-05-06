@@ -33,7 +33,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintBottom_toTopOf="@+id/ad_bottom">
 
         <android.support.design.widget.TabLayout
             android:id="@+id/tablayout_sections"
@@ -53,5 +53,21 @@
 
         </android.support.design.widget.TabLayout>
     </LinearLayout>
+
+    <com.google.android.gms.ads.AdView xmlns:ads="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/ad_bottom"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        ads:adSize="SMART_BANNER"
+        ads:adUnitId="ca-app-pub-8880885435323383/9498282625"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
+
+    <!--PRUEBA-->
+    <!--ads:adUnitId="ca-app-pub-3940256099942544/6300978111"-->
+
+    <!--REAL-->
+    <!--ads:adUnitId="ca-app-pub-8880885435323383/9498282625"-->
 
 </android.support.constraint.ConstraintLayout>

@@ -28,6 +28,9 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
@@ -76,23 +79,16 @@ public class MainActivity extends AppCompatActivity
     int routesPadding = 128;
     int directionsPadding = 265;
 
+    //Anuncios
+    AdView adBottom;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        //setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
         /*ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
@@ -100,6 +96,12 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        //Inicializar los Ads de Google
+        MobileAds.initialize(this, "ca-app-pub-8880885435323383~8876300246");
+        adBottom = findViewById(R.id.ad_bottom);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        adBottom.loadAd(adRequest);
 
         //Buscar views que se quieren referenciar
         routesSpinner = findViewById(R.id.spinner_routes);
@@ -142,7 +144,6 @@ public class MainActivity extends AppCompatActivity
                 }
 
                 //Ponerle padding para evitar que se tapen los botones del mapa por otras views
-                //Util.toast(MainActivity.this, routesSpinner.getHeight() + "");
                 googleMap.setPadding(0, routesPadding, 0, 0);
 
                 //Limitar el mapa y hacer que no se pueda rotar
